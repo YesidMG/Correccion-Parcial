@@ -1,0 +1,64 @@
+version: '3.8'
+
+services:
+  neo4j:
+    image: neo4j:latest
+    container_name: neo4j_parcial1
+    ports:
+      - "7474:7474"
+      - "7687:7687"
+    environment:
+      - NEO4J_AUTH=neo4j/password
+    volumes:
+      - neo4j_data:/data
+      - ./data:/var/lib/neo4j/import  # Importar archivos CSV
+    healthcheck:
+      test: ["CMD", "cypher-shell", "-u", "neo4j", "-p", "password", "RETURN 1"]
+      interval: 10s
+      retries: 5
+      start_period: 20s
+    restart: unless-stopped
+
+  postgres:
+    image: postgres:latest
+    container_name: postgres_parcial1
+    ports:
+      - "5432:5432"
+    environment:
+      - POSTGRES_USER=admin
+      - POSTGRES_PASSWORD=admin
+      - POSTGRES_DB=etl_db
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U admin"]
+      interval: 10s
+      retries: 5
+      start_period: 20s
+    restart: unless-stopped
+
+  etl_api:
+    build: ./etl_api
+    container_name: etl_api_parcial1
+    ports:
+      - "5000:5000"
+    depends_on:
+      neo4j:
+        condition: service_healthy
+      postgres:
+        condition: service_healthy
+    environment:
+      - NEO4J_URI=bolt://neo4j_parcial1:7687
+      - NEO4J_USER=neo4j
+      - NEO4J_PASSWORD=password
+      - POSTGRES_HOST=postgres_parcial1
+      - POSTGRES_DB=etl_db
+      - POSTGRES_USER=admin
+      - POSTGRES_PASSWORD=admin
+    volumes:
+      - ./data:/data
+    restart: unless-stopped
+
+volumes:
+  neo4j_data:
+  postgres_data:
