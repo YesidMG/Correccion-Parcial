@@ -18,12 +18,16 @@ POSTGRES_DB = os.getenv("POSTGRES_DB", "etl_db")
 POSTGRES_USER = os.getenv("POSTGRES_USER", "admin")
 POSTGRES_PASSWORD = os.getenv("POSTGRES_PASSWORD", "admin")
 
-conn = psycopg2.connect(
-    host=POSTGRES_HOST,
-    database=POSTGRES_DB,
-    user=POSTGRES_USER,
-    password=POSTGRES_PASSWORD
-)
+try:
+    conn = psycopg2.connect(
+        host=POSTGRES_HOST,
+        database=POSTGRES_DB,
+        user=POSTGRES_USER,
+        password=POSTGRES_PASSWORD
+    )
+    print("✅ Conexión exitosa a PostgreSQL")
+except Exception as e:
+    print(f"❌ Error al conectar: {e}")
 
 # 🔹 Función para crear la tabla si no existe
 def create_table():
